@@ -72,46 +72,67 @@ const CONFIG = {
 
   // ========== 车型列表 ==========
   // 结构：品牌 -> 子车型
-  // milestones.commercial: 商用日期，格式 YYYYMMDD
+  // milestones: 关键时间节点（必填 commercial 商用日期）
+  // features: 可选，每个子车型可独立定义自己的特性，不定义则使用公共特性
   vehicles: [
     {
       id: 'v1',
       name: '赛力斯',
       subVehicles: [
-        { id: 'sv1', name: 'F2D', milestones: { commercial: '20260630' } },
-        { id: 'sv2', name: 'F3', milestones: { commercial: '20260930' } }
+        {
+          id: 'sv1',
+          name: 'F2D',
+          milestones: {
+            commercial: '20260630',
+            epRelease: '20260430',
+            ppRelease: '20260531'
+          },
+          features: [
+            { id: 'f1', name: '互动游戏', subFeatures: [{ id: 'sf1', name: '成语接龙' }, { id: 'sf2', name: '诗词填空' }] },
+            { id: 'f2', name: '语音助手', subFeatures: [{ id: 'sf4', name: '语音唤醒' }] }
+          ]
+        },
+        {
+          id: 'sv2',
+          name: 'F3',
+          milestones: {
+            commercial: '20260930',
+            epRelease: '20260731',
+            ppRelease: '20260831'
+          }
+        }
       ]
     },
     {
       id: 'v2',
       name: '上汽',
       subVehicles: [
-        { id: 'sv3', name: 'SHA', milestones: { commercial: '20260815' } },
-        { id: 'sv4', name: 'SHB', milestones: { commercial: '20260901' } }
+        { id: 'sv3', name: 'SHA', milestones: { commercial: '20260815', epRelease: '20260615', ppRelease: '20260715' } },
+        { id: 'sv4', name: 'SHB', milestones: { commercial: '20260901', epRelease: '20260701', ppRelease: '20260801' } }
       ]
     },
     {
       id: 'v3',
       name: '奇瑞',
       subVehicles: [
-        { id: 'sv5', name: 'EHV', milestones: { commercial: '20260815' } },
-        { id: 'sv6', name: 'EHY', milestones: { commercial: '20260901' } }
+        { id: 'sv5', name: 'EHV', milestones: { commercial: '20260815', epRelease: '20260615', ppRelease: '20260715' } },
+        { id: 'sv6', name: 'EHY', milestones: { commercial: '20260901', epRelease: '20260701', ppRelease: '20260801' } }
       ]
     },
     {
       id: 'v4',
       name: '北汽',
       subVehicles: [
-        { id: 'sv7', name: 'X4W', milestones: { commercial: '20260815' } },
-        { id: 'sv8', name: 'X4U', milestones: { commercial: '20260901' } }
+        { id: 'sv7', name: 'X4W', milestones: { commercial: '20260815', epRelease: '20260615', ppRelease: '20260715' } },
+        { id: 'sv8', name: 'X4U', milestones: { commercial: '20260901', epRelease: '20260701', ppRelease: '20260801' } }
       ]
     },
     {
       id: 'v5',
       name: '江淮',
       subVehicles: [
-        { id: 'sv9', name: 'X6SH', milestones: { commercial: '20260815' } },
-        { id: 'sv10', name: 'X6M', milestones: { commercial: '20260901' } }
+        { id: 'sv9', name: 'X6SH', milestones: { commercial: '20260815', epRelease: '20260615', ppRelease: '20260715' } },
+        { id: 'sv10', name: 'X6M', milestones: { commercial: '20260901', epRelease: '20260701', ppRelease: '20260801' } }
       ]
     }
   ],
