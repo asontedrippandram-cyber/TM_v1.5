@@ -1,0 +1,2636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>车载软件测试进度看板 v5.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0f1419;
+      --bg-secondary: #1a2332;
+      --bg-tertiary: #243044;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-yellow: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --accent-gray: #6b7280;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+    }
+
+    body {
+      font-family: "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-title h1 {
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-title .icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .project-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .project-selector select {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      max-width: 180px;
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* Risk Section */
+    .risk-section {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+    }
+
+    .risk-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .risk-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .risk-summary {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+    }
+
+    .risk-summary-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .risk-summary-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .risk-summary-dot.high { background: var(--accent-red); }
+    .risk-summary-dot.medium { background: var(--accent-yellow); }
+    .risk-summary-dot.low { background: var(--accent-green); }
+
+    .brand-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .brand-tab:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-color: var(--accent-blue);
+    }
+
+    .brand-tab.active {
+      background: var(--accent-blue);
+      color: white;
+      border-color: var(--accent-blue);
+    }
+
+    .brand-tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      font-size: 10px;
+      margin-left: 6px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    .brand-tab:not(.active) .brand-tab-count {
+      background: var(--bg-tertiary);
+    }
+
+    .risk-cards {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .risk-cards::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .risk-cards::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+    }
+
+    .risk-cards::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .timeline-section {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .timeline-overview {
+      flex: 0 0 auto;
+      min-width: 200px;
+    }
+
+    .feature-tabs {
+      flex: 1;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+
+    .feature-tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .feature-tab:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .feature-tab.active {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 4px 0;
+    }
+
+    .breadcrumb-item {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .breadcrumb-item:hover {
+      color: var(--accent-blue);
+    }
+
+    .breadcrumb-sep {
+      color: var(--border-color);
+    }
+
+    .breadcrumb-current {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .timeline-mini {
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      padding: 14px 18px;
+      min-width: 220px;
+    }
+
+    .timeline-mini-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .timeline-mini-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .timeline-mini-days {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .timeline-mini-days span {
+      color: var(--accent-red);
+      font-weight: 600;
+    }
+
+    .timeline-mini-bar {
+      height: 10px;
+      background: var(--bg-primary);
+      border-radius: 5px;
+      overflow: visible;
+      position: relative;
+    }
+
+    .timeline-mini-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+      border-radius: 5px;
+    }
+
+    .timeline-mini-marker {
+      position: absolute;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      background: var(--accent-blue);
+      border: 3px solid var(--bg-tertiary);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+
+    .timeline-mini-end {
+      position: absolute;
+      top: 50%;
+      right: -6px;
+      width: 16px;
+      height: 16px;
+      background: var(--accent-red);
+      border-radius: 50%;
+      transform: translateY(-50%);
+    }
+
+    .risk-card {
+      flex-shrink: 0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      border: 2px solid transparent;
+      position: relative;
+      min-width: 160px;
+    }
+
+    .risk-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .risk-card.selected {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    }
+
+    .risk-card.high {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .risk-card.high.selected {
+      border-color: var(--accent-red);
+      box-shadow: 0 6px 24px rgba(239, 68, 68, 0.25);
+    }
+
+    .risk-card.medium {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    .risk-card.medium.selected {
+      border-color: var(--accent-yellow);
+      box-shadow: 0 6px 24px rgba(245, 158, 11, 0.2);
+    }
+
+    .risk-card.low {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .risk-card.low.selected {
+      border-color: var(--accent-green);
+      box-shadow: 0 6px 24px rgba(16, 185, 129, 0.2);
+    }
+
+    .risk-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .risk-card-name {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.2;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 8px;
+    }
+
+    .risk-card-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .risk-card.high .risk-card-badge {
+      background: var(--accent-red);
+      color: white;
+    }
+
+    .risk-card.medium .risk-card-badge {
+      background: var(--accent-yellow);
+      color: #000;
+    }
+
+    .risk-card.low .risk-card-badge {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .risk-card-progress {
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .risk-card-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .risk-card.high .risk-card-progress-fill { background: var(--accent-red); }
+    .risk-card.medium .risk-card-progress-fill { background: var(--accent-yellow); }
+    .risk-card.low .risk-card-progress-fill { background: var(--accent-green); }
+
+    .risk-card-main {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .risk-card-percent {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .risk-card-days {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .risk-card-days span {
+      color: var(--accent-red);
+      font-weight: 600;
+    }
+
+    .risk-card-stats {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+    }
+
+    .risk-card-stat {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .risk-card-stat.failed { color: var(--accent-red); }
+    .risk-card-stat.blocked { color: var(--accent-yellow); }
+    .risk-card-stat.pending { color: var(--accent-purple); }
+
+    .no-vehicle-hint {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .content-main {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+      display: flex;
+      gap: 20px;
+    }
+
+    .dimensions-panel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .test-panel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .stats-mini {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-mini {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .stat-mini:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+
+    .stat-mini-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .stat-mini-value.green { color: var(--accent-green); }
+    .stat-mini-value.red { color: var(--accent-red); }
+    .stat-mini-value.yellow { color: var(--accent-yellow); }
+    .stat-mini-value.purple { color: var(--accent-purple); }
+    .stat-mini-value.blue { color: var(--accent-blue); }
+
+    .stat-mini-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .stat-mini-sub {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .sub-feature-container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .sub-feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .sub-feature-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sub-feature-card:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    .sub-feature-card.selected {
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    .sub-feature-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .sub-feature-card-name {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .sub-feature-card-badge {
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .sub-feature-card-badge.high { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+    .sub-feature-card-badge.medium { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+    .sub-feature-card-badge.low { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+
+    .sub-feature-card-progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .sub-feature-card-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .sub-feature-card-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .sub-feature-card-bar-fill.high { background: var(--accent-red); }
+    .sub-feature-card-bar-fill.medium { background: var(--accent-yellow); }
+    .sub-feature-card-bar-fill.low { background: var(--accent-blue); }
+
+    .sub-feature-card-percent {
+      font-size: 20px;
+      font-weight: 700;
+      min-width: 55px;
+      text-align: right;
+    }
+
+    .sub-feature-card-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+      gap: 8px;
+    }
+
+    .sub-feature-card-dims {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dim-pill {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--bg-tertiary);
+    }
+
+    .dim-pill.benchTest { color: var(--accent-blue); }
+    .dim-pill.vehicleTest { color: var(--accent-green); }
+    .dim-pill.smokeTest { color: var(--accent-yellow); }
+    .dim-pill.pointCheck { color: var(--accent-purple); }
+    .dim-pill.e2eTest { color: #ec4899; }
+
+    .dim-pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+    }
+
+    .dim-pill-badge.passed { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .dim-pill-badge.failed { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+    .dim-pill-badge.pending { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+
+    .dimension-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      height: fit-content;
+    }
+
+    .dimension-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .dimension-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .dimension-vehicle-name {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .dimension-list { display: flex; flex-direction: column; }
+
+    .dimension-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0 14px 36px;
+      position: relative;
+    }
+
+    .dimension-item.locked {
+      opacity: 0.5;
+    }
+
+    .dimension-index {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+      z-index: 2;
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .dimension-index.locked {
+      background: var(--bg-tertiary);
+      color: var(--accent-gray);
+      border: 2px solid var(--accent-gray);
+    }
+
+    .dimension-index.completed {
+      background: var(--accent-green);
+      color: white;
+      border: 2px solid var(--accent-green);
+    }
+
+    .dimension-index.active {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent-blue);
+      border: 2px solid var(--accent-blue);
+    }
+
+    .dimension-index.pending {
+      background: var(--bg-tertiary);
+      color: var(--accent-gray);
+      border: 2px solid var(--accent-gray);
+    }
+
+    .dimension-content { flex: 1; }
+
+    .dimension-name {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dimension-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .dimension-tag.auto { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    .dimension-tag.manual { background: rgba(139, 92, 246, 0.2); color: var(--accent-purple); }
+
+    .dimension-bar {
+      height: 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .dimension-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .dimension-bar-fill.completed { background: var(--accent-green); }
+    .dimension-bar-fill.active { background: linear-gradient(90deg, var(--accent-blue), var(--accent-yellow)); }
+    .dimension-bar-fill.pending { background: var(--accent-gray); }
+
+    .dimension-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .dimension-cases {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dimension-cases span {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .dimension-percent {
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 48px;
+      text-align: right;
+    }
+
+    .dimension-percent.locked { color: var(--accent-gray); }
+    .dimension-percent.active { color: var(--accent-blue); }
+    .dimension-percent.completed { color: var(--accent-green); }
+
+    .dimension-edit {
+      padding: 6px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .dimension-edit:hover {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: white;
+    }
+
+    .dimension-locked-tip {
+      font-size: 10px;
+      color: var(--accent-gray);
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+    }
+
+    .dim-connector-line {
+      position: absolute;
+      left: 13px;
+      top: 38px;
+      width: 2px;
+      height: calc(100% - 20px);
+      background: var(--border-color);
+    }
+
+    .dim-connector-line.connector-completed {
+      background: var(--accent-green);
+    }
+
+    .dim-connector-line.connector-locked {
+      background: repeating-linear-gradient(
+        to bottom,
+        var(--accent-gray) 0px,
+        var(--accent-gray) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    }
+
+    .no-dimension {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .no-dimension-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      opacity: 0.3;
+    }
+
+    .test-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      height: fit-content;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-title { font-size: 14px; font-weight: 600; }
+
+    .section-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 7px 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary { background: var(--accent-blue); color: white; }
+    .btn-primary:hover { background: #2563eb; }
+
+    .btn-success { background: var(--accent-green); color: white; }
+    .btn-success:hover { background: #059669; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-ghost:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+    .test-table { width: 100%; border-collapse: collapse; }
+
+    .test-table th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      background: var(--bg-tertiary);
+    }
+
+    .test-table th:first-child {
+      width: 40px;
+      text-align: center;
+    }
+
+    .test-table td {
+      padding: 12px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .test-table td:first-child {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 11px;
+    }
+
+    .test-table tr:hover td { background: var(--bg-tertiary); }
+    .test-table tr:last-child td { border-bottom: none; }
+
+    .test-title-cell {
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .test-date-cell {
+      color: var(--text-secondary);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .priority-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .priority-badge.high { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+    .priority-badge.medium { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+    .priority-badge.low { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+
+    .action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+    .action-btn.delete:hover { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-color);
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-right: 4px;
+    }
+
+    .filter-btn {
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: white;
+    }
+
+    .filter-select {
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .filter-search {
+      padding: 5px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 11px;
+      min-width: 140px;
+    }
+
+    .filter-search::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .filter-search:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border-color);
+      margin: 0 4px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .modal-overlay.active { opacity: 1; visibility: visible; }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 520px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: scale(0.95);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-overlay.active .modal { transform: scale(1); }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title { font-size: 15px; font-weight: 600; }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .modal-close:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+    .modal-body { padding: 20px; }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+    }
+
+    .form-label.required::after {
+      content: ' *';
+      color: var(--accent-red);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 5px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus { outline: none; border-color: var(--accent-blue); }
+
+    .form-textarea { resize: vertical; min-height: 70px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Progress Edit Modal */
+    .progress-info {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .progress-info-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .progress-info-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .progress-info-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-info-row:last-child { margin-bottom: 0; }
+
+    .progress-info-label { color: var(--text-secondary); }
+
+    .progress-info-value { font-weight: 600; }
+    .progress-info-value.blue { color: var(--accent-blue); }
+    .progress-info-value.green { color: var(--accent-green); }
+
+    .progress-slider-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .progress-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 8px;
+      background: var(--bg-primary);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .progress-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .progress-slider-value {
+      width: 60px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .progress-remark {
+      width: 100%;
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .progress-status-hint {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    .progress-source {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 12px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+    }
+
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    @media (max-width: 992px) {
+      .content-main {
+        flex-direction: column;
+      }
+
+      .dimensions-panel, .test-panel {
+        min-width: 100%;
+      }
+
+      .timeline-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .timeline-overview {
+        min-width: 100%;
+      }
+
+      .feature-tabs {
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+
+      .sub-feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .filter-group {
+        width: 100%;
+      }
+
+      .filter-search {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-title">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      <h1>车载软件测试进度看板</h1>
+    </div>
+    <div class="project-selector">
+      <span>项目:</span>
+      <select id="projectSelect"></select>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <section class="risk-section">
+      <div class="risk-section-header">
+        <span class="risk-section-title">车型风险概览</span>
+        <div class="risk-summary" id="riskSummary"></div>
+      </div>
+      <div class="brand-tabs" id="brandTabs"></div>
+      <div class="risk-cards" id="riskCards">
+        <div class="no-vehicle-hint">加载中...</div>
+      </div>
+    </section>
+
+    <section class="timeline-section" id="timelineSection" style="display:none;">
+      <div class="timeline-overview" id="timelineOverview"></div>
+      <div class="feature-tabs" id="featureTabs"></div>
+      <div class="breadcrumb" id="breadcrumb"></div>
+    </section>
+
+    <div class="content-area">
+      <div class="content-main" id="contentMain">
+        <div class="no-dimension">
+          <svg class="no-dimension-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18"/>
+            <path d="M9 21V9"/>
+          </svg>
+          <p>点击上方风险卡片选择车型</p>
+          <p style="font-size:12px;margin-top:8px;">查看五维度进度和测试用例详情</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Test Case Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">新增测试用例</h3>
+        <button class="modal-close" onclick="closeModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="testForm">
+          <input type="hidden" id="editId">
+
+          <div class="form-group">
+            <label class="form-label required">用例标题</label>
+            <input type="text" class="form-input" id="testTitle" required placeholder="输入测试用例名称">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">特性</label>
+              <select class="form-select" id="testFeature" required>
+                <option value="">选择特性</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label required">子特性</label>
+              <select class="form-select" id="testSubFeature" required disabled>
+                <option value="">先选特性</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label required">优先级</label>
+              <select class="form-select" id="testPriority" required>
+                <option value="">选择优先级</option>
+                <option value="high">高</option>
+                <option value="medium">中</option>
+                <option value="low">低</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">备注说明</label>
+            <textarea class="form-textarea" id="testRemark" placeholder="可选填写备注信息"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveTestCase()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Edit Modal -->
+  <div class="modal-overlay" id="progressModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="progressModalTitle">编辑进度</h3>
+        <button class="modal-close" onclick="closeProgressModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editProgressSubVehicle">
+        <input type="hidden" id="editProgressSubFeature">
+        <input type="hidden" id="editProgressDimension">
+
+        <div class="progress-info" id="autoCalcSection">
+          <div class="progress-info-header">
+            <span class="progress-info-title">用例统计</span>
+            <span class="progress-info-value blue" id="autoProgress">0%</span>
+          </div>
+          <div class="progress-info-row">
+            <span class="progress-info-label">通过 / 总用例</span>
+            <span class="progress-info-value" id="autoCases">0 / 0</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">手动进度</label>
+          <div class="progress-slider-group">
+            <input type="range" class="progress-slider" id="manualProgressSlider" min="0" max="100" value="0">
+            <span class="progress-slider-value" id="manualProgressValue">0%</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">备注说明</label>
+          <textarea class="form-textarea progress-remark" id="manualRemark" placeholder="填写本维度进展说明..."></textarea>
+        </div>
+
+        <div class="progress-status-hint" id="progressStatusHint"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeProgressModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveProgress()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    车载软件测试进度看板 v5.0
+  </div>
+
+  <script>
+    // ========== 全局变量 ==========
+    let currentProjectId = null;
+    let projectData = null;
+    let testCases = [];
+    let selectedBrandId = null;
+    let selectedSubVehicleId = null;
+    let selectedSubFeatureId = null;
+    let selectedFeatureId = null;
+    let filterStatus = 'all';
+    let filterAssignee = 'all';
+    let filterPriority = 'all';
+    let searchText = '';
+
+    // ========== 初始化 ==========
+    function init() {
+      if (typeof CONFIG === 'undefined') {
+        alert('配置文件 config.js 未加载，请确保与 index1.html 同目录');
+        return;
+      }
+
+      loadProjectList();
+      setupEventListeners();
+      initData();
+    }
+
+    // ========== 数据初始化 ==========
+    function initData() {
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem('carTestProjects');
+        if (stored) {
+          projectData = JSON.parse(stored);
+        } else {
+          projectData = buildProjectDataFromConfig();
+          saveData();
+        }
+      } else {
+        projectData = buildProjectDataFromConfig();
+      }
+
+      const projectIds = Object.keys(projectData);
+      if (projectIds.length > 0) {
+        currentProjectId = projectIds[0];
+        document.getElementById('projectSelect').value = currentProjectId;
+        loadProject();
+      }
+    }
+
+    function buildProjectDataFromConfig() {
+      const data = {};
+      data[CONFIG.project.id] = {
+        id: CONFIG.project.id,
+        name: CONFIG.project.name,
+        features: CONFIG.features,
+        vehicles: CONFIG.vehicles,
+        featureDimensions: CONFIG.featureDimensions || {},
+        testCases: CONFIG.testCases || []
+      };
+      return data;
+    }
+
+    function saveData() {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('carTestProjects', JSON.stringify(projectData));
+      }
+    }
+
+    // ========== 项目列表 ==========
+    function loadProjectList() {
+      const select = document.getElementById('projectSelect');
+      const stored = localStorage.getItem('carTestProjects');
+      const data = stored ? JSON.parse(stored) : buildProjectDataFromConfig();
+      Object.keys(data).forEach(key => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = data[key].name;
+        select.appendChild(opt);
+      });
+      select.addEventListener('change', function() {
+        currentProjectId = this.value;
+        selectedBrandId = null;
+        selectedSubVehicleId = null;
+        selectedSubFeatureId = null;
+        selectedFeatureId = null;
+        filterStatus = 'all';
+        filterAssignee = 'all';
+        filterPriority = 'all';
+        searchText = '';
+        loadProject();
+      });
+    }
+
+    // ========== 加载项目 ==========
+    function loadProject() {
+      if (!currentProjectId || !projectData[currentProjectId]) return;
+      testCases = projectData[currentProjectId].testCases || [];
+      selectedBrandId = null;
+      selectedSubVehicleId = null;
+      selectedSubFeatureId = null;
+      selectedFeatureId = null;
+      filterStatus = 'all';
+      filterAssignee = 'all';
+      filterPriority = 'all';
+      searchText = '';
+      renderRiskSummary();
+      renderRiskCards();
+      renderTimelineSection();
+      renderContent();
+    }
+
+    function selectFeature(featureId) {
+      selectedFeatureId = featureId;
+      selectedSubFeatureId = null;
+      renderTimelineSection();
+      renderContent();
+    }
+
+    // ========== 计算单个维度的用例统计进度 ==========
+    function getDimCaseProgress(subVehicleId, subFeatureId, dimKey) {
+      const cases = testCases.filter(tc => tc.subVehicleId === subVehicleId && tc.featureId === subFeatureId);
+      if (cases.length === 0) return { passed: 0, total: 0, progress: 0 };
+
+      const dimCases = cases.filter(tc => {
+        const dimResult = tc.dimensionResults && tc.dimensionResults[dimKey];
+        return dimResult && dimResult.status === 'passed';
+      });
+
+      return {
+        passed: dimCases.length,
+        total: cases.length,
+        progress: cases.length > 0 ? Math.round((dimCases.length / cases.length) * 100) : 0
+      };
+    }
+
+    // ========== 计算子特性整体进度 ==========
+    // 方案C: 只有所有手动维度都100%才显示100%，否则显示最低的手动维度进度
+    function getSubFeatureProgress(subVehicleId, subFeatureId) {
+      const manualDims = CONFIG.dimensions.filter(d => d.type === 'manual');
+      const manualProgresses = [];
+
+      manualDims.forEach(dim => {
+        const caseData = getDimCaseProgress(subVehicleId, subFeatureId, dim.key);
+        const featureDims = projectData[currentProjectId].featureDimensions || {};
+        const key = `${subVehicleId}-${subFeatureId}`;
+        const manualVal = (featureDims[key] && featureDims[key][dim.key]) || 0;
+
+        // 手动维度进度 = 用例统计进度（如果用例已有）或 手动填写进度
+        const progress = caseData.total > 0 ? caseData.progress : manualVal;
+        manualProgresses.push(progress);
+      });
+
+      // 如果所有手动维度都是100%，返回100
+      const all100 = manualProgresses.every(p => p >= 100);
+      if (all100) return 100;
+
+      // 否则返回最低的
+      return manualProgresses.length > 0 ? Math.min(...manualProgresses) : 0;
+    }
+
+    // ========== 风险计算 ==========
+    function calculateRisk(subVehicle) {
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+      const commercialDate = subVehicle.milestones?.commercial;
+
+      if (!commercialDate) return { level: 'low', daysLeft: 999, progress: 0, failedCases: 0, blockedCases: 0, pendingCases: 0 };
+
+      const daysLeft = Math.max(0, parseInt(commercialDate) - parseInt(todayStr));
+
+      const project = projectData[currentProjectId];
+
+      // 计算该车型下所有子特性的进度
+      let totalProgress = 0;
+      let sfCount = 0;
+      let failedCases = 0;
+      let blockedCases = 0;
+      let pendingCases = 0;
+
+      project.features.forEach(f => {
+        f.subFeatures.forEach(sf => {
+          const progress = getSubFeatureProgress(subVehicle.id, sf.id);
+          totalProgress += progress;
+          sfCount++;
+
+          // 统计用例状态
+          const cases = testCases.filter(tc => tc.subVehicleId === subVehicle.id && tc.featureId === sf.id);
+          cases.forEach(tc => {
+            Object.values(tc.dimensionResults || {}).forEach(result => {
+              if (result.status === 'failed') failedCases++;
+              else if (result.status === 'blocked') blockedCases++;
+              else if (result.status === 'pending' || result.status === null) pendingCases++;
+            });
+          });
+        });
+      });
+
+      const progress = sfCount > 0 ? Math.round(totalProgress / sfCount) : 0;
+
+      const totalDays = 180;
+      const distanceFactor = Math.max(0, 1 - daysLeft / totalDays);
+      const completionFactor = (failedCases + blockedCases) / Math.max(1, testCases.filter(tc => tc.subVehicleId === subVehicle.id).length * 5);
+      const riskValue = distanceFactor * completionFactor;
+
+      let level = 'low';
+      if (riskValue > 0.6 || (failedCases > 0 && progress < 50)) level = 'high';
+      else if (riskValue > 0.3 || blockedCases > 0) level = 'medium';
+
+      return { level, daysLeft, progress, failedCases, blockedCases, pendingCases };
+    }
+
+    // ========== 渲染品牌Tab ==========
+    function renderBrandTabs() {
+      const tabsContainer = document.getElementById('brandTabs');
+      const project = projectData[currentProjectId];
+      if (!project) return;
+
+      const brandStats = project.vehicles.map(v => {
+        const high = v.subVehicles.filter(sv => calculateRisk(sv).level === 'high').length;
+        const medium = v.subVehicles.filter(sv => calculateRisk(sv).level === 'medium').length;
+        const low = v.subVehicles.filter(sv => calculateRisk(sv).level === 'low').length;
+        return { id: v.id, name: v.name, count: v.subVehicles.length, high, medium, low };
+      });
+
+      let tabsHtml = `
+        <button class="brand-tab ${selectedBrandId === null ? 'active' : ''}" onclick="selectBrand(null)">
+          全部
+          <span class="brand-tab-count">${project.vehicles.reduce((sum, v) => sum + v.subVehicles.length, 0)}</span>
+        </button>
+      `;
+
+      brandStats.forEach(b => {
+        tabsHtml += `
+          <button class="brand-tab ${selectedBrandId === b.id ? 'active' : ''}" onclick="selectBrand('${b.id}')">
+            ${b.name}
+            <span class="brand-tab-count">${b.count}</span>
+          </button>
+        `;
+      });
+
+      tabsContainer.innerHTML = tabsHtml;
+    }
+
+    // ========== 渲染风险汇总 ==========
+    function renderRiskSummary() {
+      const container = document.getElementById('riskSummary');
+      const project = projectData[currentProjectId];
+      if (!project) return;
+
+      let high = 0, medium = 0, low = 0;
+      project.vehicles.forEach(v => {
+        v.subVehicles.forEach(sv => {
+          const risk = calculateRisk(sv);
+          if (risk.level === 'high') high++;
+          else if (risk.level === 'medium') medium++;
+          else low++;
+        });
+      });
+
+      container.innerHTML = `
+        <div class="risk-summary-item"><span class="risk-summary-dot high"></span>高风险 ${high}</div>
+        <div class="risk-summary-item"><span class="risk-summary-dot medium"></span>中风险 ${medium}</div>
+        <div class="risk-summary-item"><span class="risk-summary-dot low"></span>低风险 ${low}</div>
+      `;
+    }
+
+    // ========== 渲染风险卡片 ==========
+    function renderRiskCards() {
+      const container = document.getElementById('riskCards');
+      const project = projectData[currentProjectId];
+      if (!project) return;
+
+      renderBrandTabs();
+
+      const vehiclesToShow = selectedBrandId
+        ? project.vehicles.filter(v => v.id === selectedBrandId)
+        : project.vehicles;
+
+      const allSubVehicles = [];
+      vehiclesToShow.forEach(v => {
+        v.subVehicles.forEach(sv => {
+          const risk = calculateRisk(sv);
+          allSubVehicles.push({
+            vehicleName: v.name,
+            subVehicleName: sv.name,
+            id: sv.id,
+            ...risk
+          });
+        });
+      });
+
+      const order = { high: 0, medium: 1, low: 2 };
+      allSubVehicles.sort((a, b) => order[a.level] - order[b.level]);
+
+      if (allSubVehicles.length === 0) {
+        container.innerHTML = '<div class="no-vehicle-hint">暂无车型数据</div>';
+        return;
+      }
+
+      container.innerHTML = allSubVehicles.map(sv => `
+        <div class="risk-card ${sv.level} ${selectedSubVehicleId === sv.id ? 'selected' : ''}"
+             onclick="selectSubVehicle('${sv.id}')">
+          <div class="risk-card-header">
+            <div class="risk-card-name">${sv.vehicleName} ${sv.subVehicleName}</div>
+            <div class="risk-card-badge">${sv.level === 'high' ? '高' : sv.level === 'medium' ? '中' : '低'}</div>
+          </div>
+          <div class="risk-card-progress">
+            <div class="risk-card-progress-fill" style="width: ${sv.progress}%"></div>
+          </div>
+          <div class="risk-card-main">
+            <div class="risk-card-percent">${sv.progress}%</div>
+            <div class="risk-card-days">距商用 <span>${sv.daysLeft}</span>天</div>
+          </div>
+          <div class="risk-card-stats">
+            ${sv.failedCases > 0 ? `<span class="risk-card-stat failed">● 失败 ${sv.failedCases}</span>` : ''}
+            ${sv.blockedCases > 0 ? `<span class="risk-card-stat blocked">● 阻塞 ${sv.blockedCases}</span>` : ''}
+            ${sv.pendingCases > 0 ? `<span class="risk-card-stat pending">○ 待测 ${sv.pendingCases}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectBrand(brandId) {
+      if (!projectData || !projectData[currentProjectId]) return;
+      selectedBrandId = brandId;
+      if (brandId && selectedSubVehicleId) {
+        const vehicle = projectData[currentProjectId].vehicles.find(v => v.id === brandId);
+        if (vehicle && !vehicle.subVehicles.some(sv => sv.id === selectedSubVehicleId)) {
+          selectedSubVehicleId = null;
+          selectedSubFeatureId = null;
+        }
+      }
+      renderRiskCards();
+      renderTimelineSection();
+      renderContent();
+    }
+
+    function selectSubVehicle(subVehicleId) {
+      selectedSubVehicleId = subVehicleId;
+      selectedSubFeatureId = null;
+      filterStatus = 'all';
+      filterAssignee = 'all';
+      filterPriority = 'all';
+      searchText = '';
+      renderRiskCards();
+      renderTimelineSection();
+      renderContent();
+    }
+
+    // ========== 渲染时间线区域 ==========
+    function renderTimelineSection() {
+      const section = document.getElementById('timelineSection');
+      const timelineOverview = document.getElementById('timelineOverview');
+      const featureTabs = document.getElementById('featureTabs');
+      const breadcrumb = document.getElementById('breadcrumb');
+
+      if (!selectedSubVehicleId) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'flex';
+
+      const result = getSubVehicle(selectedSubVehicleId);
+      if (!result) return;
+
+      const { subVehicle, vehicle } = result;
+
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+      const commercialDate = subVehicle.milestones?.commercial || CONFIG.project.defaultCommercial;
+      const daysLeft = Math.max(0, parseInt(commercialDate) - parseInt(todayStr));
+      const startDate = CONFIG.project.startDate;
+      const totalDays = parseInt(commercialDate) - parseInt(startDate);
+      const daysPassed = Math.max(0, parseInt(todayStr) - parseInt(startDate));
+      const timelinePercent = Math.min(100, Math.max(0, (daysPassed / totalDays) * 100));
+
+      timelineOverview.innerHTML = `
+        <div class="timeline-mini">
+          <div class="timeline-mini-header">
+            <span class="timeline-mini-title">${vehicle.name} ${subVehicle.name}</span>
+            <span class="timeline-mini-days">距商用: <span>${daysLeft}</span> 天</span>
+          </div>
+          <div class="timeline-mini-bar">
+            <div class="timeline-mini-progress" style="width: ${timelinePercent}%"></div>
+            <div class="timeline-mini-marker" style="left: ${timelinePercent}%"></div>
+            <div class="timeline-mini-end"></div>
+          </div>
+        </div>
+      `;
+
+      const project = projectData[currentProjectId];
+      let tabsHtml = `<button class="feature-tab ${!selectedFeatureId ? 'active' : ''}" onclick="selectFeature(null)">全部</button>`;
+      project.features.forEach(f => {
+        tabsHtml += `<button class="feature-tab ${selectedFeatureId === f.id ? 'active' : ''}" onclick="selectFeature('${f.id}')">${f.name}</button>`;
+      });
+      featureTabs.innerHTML = tabsHtml;
+
+      let breadcrumbHtml = `<span class="breadcrumb-item" onclick="clearSelectedSubFeature()">${vehicle.name} ${subVehicle.name}</span>`;
+      if (selectedFeatureId) {
+        const feature = project.features.find(f => f.id === selectedFeatureId);
+        if (feature) {
+          breadcrumbHtml += `<span class="breadcrumb-sep">/</span>`;
+          if (selectedSubFeatureId) {
+            breadcrumbHtml += `<span class="breadcrumb-item" onclick="clearSelectedSubFeature()">${feature.name}</span>`;
+            breadcrumbHtml += `<span class="breadcrumb-sep">/</span>`;
+            breadcrumbHtml += `<span class="breadcrumb-current">${getSubFeatureName(selectedSubFeatureId)}</span>`;
+          } else {
+            breadcrumbHtml += `<span class="breadcrumb-current">${feature.name}</span>`;
+          }
+        }
+      } else if (selectedSubFeatureId) {
+        breadcrumbHtml = `<span class="breadcrumb-item" onclick="clearSelectedSubFeature()">${vehicle.name} ${subVehicle.name}</span>`;
+        breadcrumbHtml += `<span class="breadcrumb-sep">/</span>`;
+        breadcrumbHtml += `<span class="breadcrumb-current">${getSubFeatureName(selectedSubFeatureId)}</span>`;
+      }
+      breadcrumb.innerHTML = breadcrumbHtml;
+    }
+
+    function getSubVehicle(subVehicleId) {
+      const project = projectData[currentProjectId];
+      if (!project) return null;
+      for (const v of project.vehicles) {
+        const sv = v.subVehicles.find(s => s.id === subVehicleId);
+        if (sv) return { subVehicle: sv, vehicle: v };
+      }
+      return null;
+    }
+
+    // ========== 渲染主内容区 ==========
+    function renderContent() {
+      const container = document.getElementById('contentMain');
+
+      if (!selectedSubVehicleId) {
+        container.innerHTML = `
+          <div class="no-dimension">
+            <svg class="no-dimension-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M3 9h18"/>
+              <path d="M9 21V9"/>
+            </svg>
+            <p>点击上方风险卡片选择车型</p>
+            <p style="font-size:12px;margin-top:8px;">查看五维度进度和测试用例详情</p>
+          </div>
+        `;
+        return;
+      }
+
+      const result = getSubVehicle(selectedSubVehicleId);
+      if (!result) return;
+
+      const { subVehicle, vehicle } = result;
+      const project = projectData[currentProjectId];
+
+      // 统计该车型下所有用例
+      const allSvCases = testCases.filter(tc => tc.subVehicleId === selectedSubVehicleId);
+      const totalCases = allSvCases.length;
+
+      // 统计各状态
+      let passedCount = 0, failedCount = 0, blockedCount = 0, pendingCount = 0;
+      allSvCases.forEach(tc => {
+        Object.values(tc.dimensionResults || {}).forEach(result => {
+          if (result.status === 'passed') passedCount++;
+          else if (result.status === 'failed') failedCount++;
+          else if (result.status === 'blocked') blockedCount++;
+          else if (result.status === 'pending' || result.status === null) pendingCount++;
+        });
+      });
+
+      if (!selectedSubFeatureId) {
+        const featuresToShow = selectedFeatureId
+          ? project.features.filter(f => f.id === selectedFeatureId)
+          : project.features;
+
+        let statsHtml = `
+          <div class="stats-mini">
+            <div class="stat-mini">
+              <div class="stat-mini-value">${totalCases}</div>
+              <div class="stat-mini-label">总用例</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value green">${passedCount}</div>
+              <div class="stat-mini-label">已通过</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value red">${failedCount}</div>
+              <div class="stat-mini-label">失败</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value yellow">${blockedCount}</div>
+              <div class="stat-mini-label">阻塞</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value purple">${pendingCount}</div>
+              <div class="stat-mini-label">待测试</div>
+            </div>
+          </div>
+        `;
+
+        let subFeatureHtml = '';
+        featuresToShow.forEach(f => {
+          f.subFeatures.forEach(sf => {
+            const progress = getSubFeatureProgress(subVehicle.id, sf.id);
+            const sfCases = allSvCases.filter(tc => tc.featureId === sf.id);
+            const sfPassed = sfCases.filter(tc => {
+              const dr = tc.dimensionResults || {};
+              return Object.values(dr).some(r => r.status === 'passed');
+            }).length;
+
+            let riskLevel = 'low';
+            const sfFailed = sfCases.filter(tc => {
+              const dr = tc.dimensionResults || {};
+              return Object.values(dr).some(r => r.status === 'failed');
+            }).length;
+            if (sfFailed > 0 || progress < 30) riskLevel = 'high';
+            else if (progress < 70) riskLevel = 'medium';
+
+            // 各维度用例统计
+            const dimStats = CONFIG.dimensions.map(dim => {
+              const caseData = getDimCaseProgress(subVehicle.id, sf.id, dim.key);
+              return { dim, ...caseData };
+            });
+
+            subFeatureHtml += `
+              <div class="sub-feature-card ${selectedSubFeatureId === sf.id ? 'selected' : ''}" onclick="selectSubFeatureDirect('${sf.id}', '${f.id}')">
+                <div class="sub-feature-card-header">
+                  <span class="sub-feature-card-name">${sf.name}</span>
+                  <span class="sub-feature-card-badge ${riskLevel}">${riskLevel === 'high' ? '高风险' : riskLevel === 'medium' ? '中风险' : '低风险'}</span>
+                </div>
+                <div class="sub-feature-card-progress">
+                  <div class="sub-feature-card-bar">
+                    <div class="sub-feature-card-bar-fill ${riskLevel}" style="width:${progress}%"></div>
+                  </div>
+                  <span class="sub-feature-card-percent">${progress}%</span>
+                </div>
+                <div class="sub-feature-card-meta">
+                  <span>用例 ${sfPassed}/${sfCases.length}</span>
+                </div>
+                <div class="sub-feature-card-dims">
+                  ${dimStats.map(d => `
+                    <span class="dim-pill-badge ${d.progress >= 100 ? 'passed' : d.total > 0 ? 'pending' : ''}">
+                      ${d.dim.name.substring(0,2)} ${d.progress}%
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          });
+        });
+
+        container.innerHTML = `<div class="sub-feature-container">
+          ${statsHtml}
+          <div class="sub-feature-grid">${subFeatureHtml}</div>
+        </div>`;
+        return;
+      }
+
+      // ========== 选中子特性后 - 五维度详情 ==========
+      const dims = project.featureDimensions || {};
+      const dimKey = `${subVehicle.id}-${selectedSubFeatureId}`;
+      const featureDimData = dims[dimKey] || {};
+
+      let dimHtml = '';
+      let previousCompleted = true;
+
+      CONFIG.dimensions.forEach((dim, idx) => {
+        const caseData = getDimCaseProgress(selectedSubVehicleId, selectedSubFeatureId, dim.key);
+        const manualData = featureDimData[dim.key] || { progress: 0, remark: '' };
+
+        // 进度：自动维度用例统计，手动维度手动填写
+        const progress = dim.type === 'auto' ? caseData.progress : manualData.progress;
+
+        let status = 'locked';
+        let statusClass = 'locked';
+
+        if (previousCompleted) {
+          if (progress >= 100) { status = 'completed'; statusClass = 'completed'; }
+          else if (progress > 0) { status = 'active'; statusClass = 'active'; }
+          else { status = 'pending'; statusClass = 'pending'; }
+        }
+
+        const connectorClass = status === 'locked' ? 'connector-locked' : (status === 'completed' ? 'connector-completed' : '');
+        previousCompleted = progress >= 100;
+
+        const barClass = status === 'completed' ? 'completed' : (status === 'active' ? 'active' : 'pending');
+
+        let metaHtml = '';
+        if (dim.type === 'auto') {
+          metaHtml = `
+            <div class="dimension-meta">
+              <div class="dimension-cases">
+                <span style="color:var(--accent-green)">✓ ${caseData.passed}</span>
+                <span>/ ${caseData.total} 用例</span>
+              </div>
+            </div>
+          `;
+        } else {
+          metaHtml = `
+            <div class="dimension-meta">
+              <div class="dimension-cases">
+                <span>${caseData.total} 用例</span>
+              </div>
+            </div>
+          `;
+        }
+
+        dimHtml += `
+          <div class="dimension-item ${statusClass}">
+            <div class="dim-connector-line ${connectorClass}"></div>
+            <div class="dimension-index ${statusClass}">${dim.index}</div>
+            <div class="dimension-content">
+              <div class="dimension-name">
+                ${dim.name}
+                <span class="dimension-tag ${dim.type === 'auto' ? 'auto' : 'manual'}">${dim.type === 'auto' ? '用例驱动' : '手动填写'}</span>
+              </div>
+              ${metaHtml}
+              <div class="dimension-bar">
+                <div class="dimension-bar-fill ${barClass}" style="width: ${progress}%"></div>
+              </div>
+            </div>
+            <span class="dimension-percent ${statusClass}">${progress}%</span>
+            ${status !== 'locked' ? `<button class="dimension-edit" onclick="openProgressModal('${dim.key}')">编辑</button>` : '<span class="dimension-locked-tip">前置未完成</span>'}
+          </div>
+        `;
+      });
+
+      // ========== 用例表格 ==========
+      let filteredCases = testCases.filter(tc => tc.subVehicleId === selectedSubVehicleId && tc.featureId === selectedSubFeatureId);
+
+      if (filterStatus !== 'all') {
+        filteredCases = filteredCases.filter(tc => {
+          if (filterStatus === 'pending') {
+            return !tc.dimensionResults || Object.values(tc.dimensionResults).every(r => !r.status);
+          }
+          return tc.dimensionResults && Object.values(tc.dimensionResults).some(r => r.status === filterStatus);
+        });
+      }
+      if (filterPriority !== 'all') {
+        filteredCases = filteredCases.filter(tc => tc.priority === filterPriority);
+      }
+      if (searchText) {
+        const search = searchText.toLowerCase();
+        filteredCases = filteredCases.filter(tc => tc.title.toLowerCase().includes(search));
+      }
+
+      const total = filteredCases.length;
+
+      let tableHtml = '';
+      if (total === 0) {
+        tableHtml = '<div class="empty-state"><p>暂无测试用例</p></div>';
+      } else {
+        tableHtml = `
+          <div class="filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">状态:</span>
+              <button class="filter-btn ${filterStatus === 'all' ? 'active' : ''}" onclick="setFilterStatus('all')">全部</button>
+              <button class="filter-btn ${filterStatus === 'passed' ? 'active' : ''}" onclick="setFilterStatus('passed')">通过</button>
+              <button class="filter-btn ${filterStatus === 'failed' ? 'active' : ''}" onclick="setFilterStatus('failed')">失败</button>
+              <button class="filter-btn ${filterStatus === 'blocked' ? 'active' : ''}" onclick="setFilterStatus('blocked')">阻塞</button>
+              <button class="filter-btn ${filterStatus === 'pending' ? 'active' : ''}" onclick="setFilterStatus('pending')">待测</button>
+            </div>
+            <div class="filter-divider"></div>
+            <div class="filter-group">
+              <span class="filter-label">优先级:</span>
+              <select class="filter-select" onchange="setFilterPriority(this.value)">
+                <option value="all" ${filterPriority === 'all' ? 'selected' : ''}>全部</option>
+                <option value="high" ${filterPriority === 'high' ? 'selected' : ''}>高</option>
+                <option value="medium" ${filterPriority === 'medium' ? 'selected' : ''}>中</option>
+                <option value="low" ${filterPriority === 'low' ? 'selected' : ''}>低</option>
+              </select>
+            </div>
+            <div class="filter-group" style="flex:1;">
+              <input type="text" class="filter-search" placeholder="搜索用例..." value="${searchText}" oninput="setSearchText(this.value)">
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="test-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>用例标题</th>
+                  <th>优先级</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredCases.map((tc, idx) => `
+                  <tr>
+                    <td>${idx + 1}</td>
+                    <td><span class="test-title-cell" title="${tc.title}">${tc.title}</span></td>
+                    <td><span class="priority-badge ${tc.priority}">${tc.priority === 'high' ? '高' : tc.priority === 'medium' ? '中' : '低'}</span></td>
+                    <td>
+                      <button class="action-btn" onclick="editTestCase(${tc.id})" data-tooltip="编辑">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="dimensions-panel">
+          <div class="dimension-section">
+            <div class="dimension-header">
+              <div>
+                <div class="dimension-title">五维度测试进度</div>
+                <div class="dimension-vehicle-name">${vehicle.name} ${subVehicle.name} > ${getSubFeatureName(selectedSubFeatureId)}</div>
+              </div>
+            </div>
+            <div class="dimension-list">
+              ${dimHtml}
+            </div>
+          </div>
+        </div>
+        <div class="test-panel">
+          <div class="stats-mini">
+            <div class="stat-mini">
+              <div class="stat-mini-value">${total}</div>
+              <div class="stat-mini-label">用例总数</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value green">${passedCount}</div>
+              <div class="stat-mini-label">已通过</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value red">${failedCount}</div>
+              <div class="stat-mini-label">失败</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value yellow">${blockedCount}</div>
+              <div class="stat-mini-label">阻塞</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-value purple">${pendingCount}</div>
+              <div class="stat-mini-label">待测试</div>
+            </div>
+          </div>
+          <div class="test-section">
+            <div class="section-header">
+              <h3 class="section-title">测试用例</h3>
+              <div class="section-actions">
+                <button class="btn btn-success" onclick="exportCases()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  导出
+                </button>
+                <button class="btn btn-primary" onclick="openModal()">+ 新增用例</button>
+              </div>
+            </div>
+            ${tableHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    // ========== 筛选函数 ==========
+    function setFilterStatus(status) {
+      filterStatus = status;
+      renderContent();
+    }
+
+    function setFilterPriority(priority) {
+      filterPriority = priority;
+      renderContent();
+    }
+
+    function setSearchText(text) {
+      searchText = text;
+      renderContent();
+    }
+
+    // ========== 导出 ==========
+    function exportCases() {
+      let exportData = testCases.filter(tc => tc.subVehicleId === selectedSubVehicleId && tc.featureId === selectedSubFeatureId);
+
+      if (filterStatus !== 'all') {
+        exportData = exportData.filter(tc => {
+          if (filterStatus === 'pending') {
+            return !tc.dimensionResults || Object.values(tc.dimensionResults).every(r => !r.status);
+          }
+          return tc.dimensionResults && Object.values(tc.dimensionResults).some(r => r.status === filterStatus);
+        });
+      }
+      if (filterPriority !== 'all') {
+        exportData = exportData.filter(tc => tc.priority === filterPriority);
+      }
+      if (searchText) {
+        const search = searchText.toLowerCase();
+        exportData = exportData.filter(tc => tc.title.toLowerCase().includes(search));
+      }
+
+      const headers = ['序号', '用例标题', '优先级', '备注'];
+      const priorityMap = { high: '高', medium: '中', low: '低' };
+
+      let csv = headers.join(',') + '\n';
+      exportData.forEach((tc, idx) => {
+        const row = [
+          idx + 1,
+          `"${tc.title}"`,
+          priorityMap[tc.priority] || tc.priority,
+          `"${tc.remark || ''}"`
+        ];
+        csv += row.join(',') + '\n';
+      });
+
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      const result = getSubVehicle(selectedSubVehicleId);
+      link.download = `${result.vehicle.name}_${result.subVehicle.name}_测试用例_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+    }
+
+    function selectSubFeatureDirect(subFeatureId, featureId) {
+      selectedSubFeatureId = subFeatureId;
+      selectedFeatureId = featureId;
+      filterStatus = 'all';
+      filterAssignee = 'all';
+      filterPriority = 'all';
+      searchText = '';
+      renderTimelineSection();
+      renderContent();
+    }
+
+    function clearSelectedSubFeature() {
+      selectedSubFeatureId = null;
+      filterStatus = 'all';
+      filterAssignee = 'all';
+      filterPriority = 'all';
+      searchText = '';
+      renderTimelineSection();
+      renderContent();
+    }
+
+    function getSubFeatureName(featureId) {
+      const project = projectData[currentProjectId];
+      if (!project) return '';
+      for (const f of project.features) {
+        const sf = f.subFeatures.find(s => s.id === featureId);
+        if (sf) return sf.name;
+      }
+      return '';
+    }
+
+    // ========== 进度编辑弹窗 ==========
+    function openProgressModal(dimensionKey) {
+      const result = getSubVehicle(selectedSubVehicleId);
+      if (!result) return;
+
+      const dim = CONFIG.dimensions.find(d => d.key === dimensionKey);
+      const project = projectData[currentProjectId];
+      const featureDims = project.featureDimensions || {};
+      const key = `${selectedSubVehicleId}-${selectedSubFeatureId}`;
+      const manualData = (featureDims[key] && featureDims[key][dimensionKey]) || { progress: 0, remark: '' };
+
+      document.getElementById('progressModalTitle').textContent = `编辑「${dim.name}」进度`;
+      document.getElementById('editProgressSubVehicle').value = selectedSubVehicleId;
+      document.getElementById('editProgressSubFeature').value = selectedSubFeatureId;
+      document.getElementById('editProgressDimension').value = dimensionKey;
+      document.getElementById('manualProgressSlider').value = manualData.progress || 0;
+      document.getElementById('manualProgressValue').textContent = (manualData.progress || 0) + '%';
+      document.getElementById('manualRemark').value = manualData.remark || '';
+
+      // 用例统计信息
+      const caseData = getDimCaseProgress(selectedSubVehicleId, selectedSubFeatureId, dimensionKey);
+      document.getElementById('autoProgress').textContent = caseData.progress + '%';
+      document.getElementById('autoCases').textContent = `${caseData.passed} / ${caseData.total}`;
+
+      if (dim.type === 'auto') {
+        document.getElementById('autoCalcSection').style.display = 'block';
+        document.getElementById('progressStatusHint').textContent = '此维度为用例自动统计，不能手动修改进度';
+      } else {
+        document.getElementById('autoCalcSection').style.display = 'block';
+        document.getElementById('progressStatusHint').textContent = '滑动调节进度，填写备注说明';
+      }
+
+      document.getElementById('progressModalOverlay').classList.add('active');
+    }
+
+    function closeProgressModal() {
+      document.getElementById('progressModalOverlay').classList.remove('active');
+    }
+
+    function saveProgress() {
+      const subVehicleId = document.getElementById('editProgressSubVehicle').value;
+      const subFeatureId = document.getElementById('editProgressSubFeature').value;
+      const dimensionKey = document.getElementById('editProgressDimension').value;
+      const progress = parseInt(document.getElementById('manualProgressSlider').value) || 0;
+      const remark = document.getElementById('manualRemark').value.trim();
+
+      const project = projectData[currentProjectId];
+      if (!project) return;
+
+      if (!project.featureDimensions) {
+        project.featureDimensions = {};
+      }
+
+      const key = `${subVehicleId}-${subFeatureId}`;
+      if (!project.featureDimensions[key]) {
+        project.featureDimensions[key] = {};
+      }
+
+      project.featureDimensions[key][dimensionKey] = { progress, remark };
+
+      saveData();
+      renderRiskCards();
+      renderRiskSummary();
+      renderContent();
+      closeProgressModal();
+    }
+
+    // ========== 事件监听 ==========
+    function setupEventListeners() {
+      document.getElementById('testFeature').addEventListener('change', function() {
+        updateSubFeatureSelect(this.value);
+      });
+
+      document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+
+      document.getElementById('progressModalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeProgressModal();
+      });
+
+      document.getElementById('manualProgressSlider').addEventListener('input', function() {
+        document.getElementById('manualProgressValue').textContent = this.value + '%';
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          closeModal();
+          closeProgressModal();
+        }
+      });
+    }
+
+    // ========== 表单函数 ==========
+    function updateFeatureSelect() {
+      const select = document.getElementById('testFeature');
+      const project = projectData[currentProjectId];
+      if (!project) return;
+
+      let options = '<option value="">选择特性</option>';
+      project.features.forEach(f => {
+        options += `<option value="${f.id}">${f.name}</option>`;
+      });
+      select.innerHTML = options;
+    }
+
+    function updateSubFeatureSelect(featureId) {
+      const select = document.getElementById('testSubFeature');
+      const project = projectData[currentProjectId];
+      if (!project) return;
+
+      const feature = project.features.find(f => f.id === featureId);
+      if (!feature) {
+        select.innerHTML = '<option value="">先选特性</option>';
+        select.disabled = true;
+        return;
+      }
+
+      let options = '<option value="">选择子特性</option>';
+      feature.subFeatures.forEach(sf => {
+        options += `<option value="${sf.id}">${sf.name}</option>`;
+      });
+      select.innerHTML = options;
+      select.disabled = false;
+    }
+
+    function openModal(editId = null) {
+      const title = document.getElementById('modalTitle');
+      const form = document.getElementById('testForm');
+
+      form.reset();
+      document.getElementById('editId').value = '';
+      updateFeatureSelect();
+
+      if (editId) {
+        const tc = testCases.find(t => t.id === editId);
+        if (tc) {
+          title.textContent = '编辑测试用例';
+          document.getElementById('editId').value = tc.id;
+          document.getElementById('testTitle').value = tc.title;
+
+          const project = projectData[currentProjectId];
+          let parentFeatureId = null;
+          for (const f of project.features) {
+            if (f.subFeatures.some(sf => sf.id === tc.featureId)) {
+              parentFeatureId = f.id;
+              break;
+            }
+          }
+
+          document.getElementById('testFeature').value = parentFeatureId || '';
+          updateSubFeatureSelect(parentFeatureId || '');
+          document.getElementById('testSubFeature').value = tc.featureId;
+          document.getElementById('testPriority').value = tc.priority;
+          document.getElementById('testRemark').value = tc.remark || '';
+        }
+      } else {
+        title.textContent = '新增测试用例';
+      }
+
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    function saveTestCase() {
+      const title = document.getElementById('testTitle').value.trim();
+      const featureId = document.getElementById('testSubFeature').value;
+      const priority = document.getElementById('testPriority').value;
+      const remark = document.getElementById('testRemark').value.trim();
+      const editId = document.getElementById('editId').value;
+
+      if (!title || !featureId || !priority) {
+        alert('请填写必填项');
+        return;
+      }
+
+      if (!selectedSubVehicleId) {
+        alert('请先选择一个车型');
+        return;
+      }
+
+      // 初始化 dimensionResults（5个维度）
+      const defaultDimensionResults = {};
+      CONFIG.dimensions.forEach(dim => {
+        defaultDimensionResults[dim.key] = { status: null, assignee: null, date: null };
+      });
+
+      if (editId) {
+        const index = testCases.findIndex(t => t.id === parseInt(editId));
+        if (index !== -1) {
+          testCases[index] = {
+            ...testCases[index],
+            title, featureId, priority, remark
+          };
+        }
+      } else {
+        const maxId = testCases.length > 0 ? Math.max(...testCases.map(t => t.id)) : 0;
+        testCases.push({
+          id: maxId + 1,
+          title,
+          featureId,
+          priority,
+          remark,
+          subVehicleId: selectedSubVehicleId,
+          dimensionResults: JSON.parse(JSON.stringify(defaultDimensionResults))
+        });
+      }
+
+      projectData[currentProjectId].testCases = testCases;
+      saveData();
+      loadProject();
+      closeModal();
+    }
+
+    function editTestCase(id) {
+      openModal(id);
+    }
+
+    // ========== 启动 ==========
+    init();
+  </script>
+</body>
+</html>
